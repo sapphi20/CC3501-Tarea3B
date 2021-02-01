@@ -21,15 +21,31 @@ class Person(object):
         self.days_to_recover = days_recovery
         self.days_sick = 0
 
-        gpu_person = es.toGPUShape(bs.createColorQuad(0, 0, 1))
-        person = sg.SceneGraphNode('person')
-        person.transform = tr.scale(0.1, 0.1, 0)
-        person.childs = [gpu_person]
+        self.x = self.ranged_random_num(1)
+        self.y = self.ranged_random_num(1)
+        
+        gpu_sane_person = es.toGPUShape(bs.createColorQuad(0, 0, 1))
+        sane_person = sg.SceneGraphNode('sane_person')
+        sane_person.childs = [gpu_sane_person]
 
-        self.x = round(random.uniform(-1, 1), 1)
-        self.y = round(random.uniform(-1, 1), 1)
+        gpu_sick_person = es.toGPUShape(bs.createColorQuad(1, 0, 0))
+        sick_person = sg.SceneGraphNode('sick_person')
+        sick_person.childs = [gpu_sick_person]
 
-        self.model = person
+        self.healthy_gpu = sane_person
+        self.sick_gpu = sick_person
+        self.model = None
+
+    @staticmethod
+    def ranged_random_num(range, ini = 0):
+        rand = random.uniform(-range, range)
+        final = ini + rand
+        if final > 0:
+            final = min(final, 1)
+        else:
+            final = max(final, -1)
+        return final
+
 
     def get_status(self):
         return self.health_status
@@ -59,8 +75,9 @@ class Person(object):
                 self.days_sick += 1
 
     def update(self):
-        self.x += random.random()
-        self.y += random.random()
+        self.x = self.ranged_random_num(0.2, self.x)
+        self.y = self.ranged_random_num(0.2, self.y)
+        self.model.transform = tr.matmul([tr.translate(self.x, self.y, 0), tr.scale(0.02, 0.02, 0)])
         self.while_sick()
 
     def distance(self, other):
@@ -78,5 +95,11 @@ class Person(object):
             self.days_sick += 1
 
     def draw(self, pipeline):
-        self.model.transform = tr.translate(self.x, self.y, 0)
-        sg.drawSceneGraphNode(self.model, pipeline, "transform")
+        if not self.is_dead():
+            if self.is_sick():
+                self.model = self.sick_gpu
+            elif self.is_healthy():
+                self.model = self.healthy_gpu
+
+            self.model.transform = tr.matmul([tr.translate(self.x, self.y, 0), tr.scale(0.02, 0.02, 0)])
+            sg.drawSceneGraphNode(self.model, pipeline, "transform")

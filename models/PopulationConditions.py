@@ -52,10 +52,11 @@ class PopulationConditions(object):
 
     def contagion_process(self):
         copy = tuple(self.list_people)
-        for person_i in copy:
-            if person_i.is_sick():
-                for others in copy:
-                    person_i.when_near_other(others)
+        for i in range(len(copy)):
+            current = self.list_people[i]
+            if current.is_sick():
+                for other in range(len(copy)):
+                    current.when_near_other(self.list_people[other])
 
     def next_day(self):
         self.set_current_day(self.get_current_day() + 1)
